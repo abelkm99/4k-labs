@@ -6,7 +6,7 @@ export FLASK_APP=lab.py\
 export FLASK_DEBUG=1\
 flask run
 
-## the requirements are
+# the requirements are
     flask\
     flask_pymongo\ 
     flask_cors\

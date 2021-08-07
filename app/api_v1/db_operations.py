@@ -445,7 +445,8 @@ def _create_project(data):
         'github': data['github_link'],
         'docs': data['docs_link'],
         'description': data['description'],
-        'deadline':data['deadline']
+        'deadline':data['deadline'],
+        "project_leader":data['project_leader']
     }
 
     inserted_project = Project.insert_one(project)
@@ -676,7 +677,7 @@ update project
 
 
 def _update_project(data):
-    subset = ['project_title', 'github', 'docs', 'description', 'project_code','deadline']
+    subset = ['project_title', 'github', 'docs', 'description', 'project_code','deadline','project_leader']
     project = Project.find_one(
         {'project_code': data.get('project_code', None)})
     if not project:
@@ -685,6 +686,9 @@ def _update_project(data):
     new_data = {}
     for key in subset:
         new_data[key] = data.get(key, None) or project.get(key, None)
+    team_members = project['team_members']
+    if(data['project_leader'] not in team_members):
+        team_members.append(data['project_leader'])
     update_project = Project.update_one(
         {"project_code": data['project_code']},
         {
@@ -693,7 +697,9 @@ def _update_project(data):
                 "github": data['github'],
                 "docs": data['docs'],
                 "description": data['description'],
-                "deadline":data["deadline"]
+                "deadline":data["deadline"],
+                "project_leader":data["project_leader"],
+                "team_members":team_members
             }
         }
     )

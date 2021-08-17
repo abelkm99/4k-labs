@@ -948,10 +948,12 @@ def _save_event(image_data, event_id):
 def _delte_event_image(images):
     event_path = current_app.config['EVENTS']
 
-    for image in images:
-        path = os.path.join(os.getcwd(), event_path, image)
-        os.remove(path)
-
+    try:
+        for image in images:
+            path = os.path.join(os.getcwd(), event_path, image)
+            os.remove(path)
+    except:
+        pass
 
 def _delete_event(event_id):
     event = Event.find_one({'event_id': event_id})
@@ -965,3 +967,85 @@ def _delete_event(event_id):
     else:
         msg = {"message": "event id doesn't exist"}
         return make_response(jsonify(msg), 404)
+def _generate_event_galleryname(prefix):
+    event_path = current_app.config['EVENTS']
+    all_images = os.listdir(event_path)
+    event_gallery_image_id = prefix+'_'+id_generator(5)+'.png'
+    while event_gallery_image_id in all_images:
+        event_gallery_image_id = prefix+'_'+id_generator(5)+'.png'
+    return event_gallery_image_id
+
+def _add_image_gallery(images,event_id):
+    event_gallery = []
+    event_path = current_app.config['EVENTS']
+
+    if not os.path.exists(event_path):
+        os.mkdir(event_path)
+
+    for image in images:
+
+        decoded = base64.b64decode(image)
+        image = Image.open(io.BytesIO(decoded))
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        img = image.resize((1280, 720))
+        event_gallery_image_id = _generate_event_galleryname(event_id)
+        img.save(os.path.join(event_path, event_gallery_image_id))
+        event_gallery.append(event_gallery_image_id)
+
+    return event_gallery
+def _update_event_image(image_data, event_id):
+
+    event_path = current_app.config['EVENTS']
+
+    decoded = base64.b64decode(image_data)
+    image = Image.open(io.BytesIO(decoded))
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    img = image.resize((1280, 720))
+    img.save(os.path.join(event_path, event_id+'.png'))
+
+
+def _update_event(event_id,update_data):
+    '''
+        TODO 
+            [x] check if event id is valid
+            [x] get the old data befor an update
+            [x] delete images if there is image to be deleted
+                [x] update the new data 
+            [x] if there are new gallery images exist first generate random_name for it and upload it letter 
+                [x] check if the generated image is valid using data from path
+            [] if new image is uploaded update the image at the path
+    '''
+    event = Event.find_one({'event_id':event_id})
+    if event:
+        updated_event = {
+            'event_title':update_data.get('event_title',event['event_title']),
+            'event_start':update_data.get('event_start',event['event_start']),
+            'event_end':update_data.get('event_end',event['event_end']),
+            'event_description':update_data.get('event_description',event['event_description']),
+            'event_gallery':event['event_gallery'],
+        }
+        if(update_data.get('tobe_deleted_images')):
+            delete_data = [x for x in update_data.get('tobe_deleted_images') if x in updated_event['event_gallery']]
+            _delte_event_image(delete_data)
+            updated_event['event_gallery'] = [x for x in updated_event['event_gallery'] if x not in update_data.get('tobe_deleted_images')]
+        if(update_data.get('new_galley_images')):
+            new_gallery_images = _add_image_gallery(update_data.get('new_galley_images'),event_id)
+            updated_event['event_gallery'].extend(new_gallery_images)
+        if(update_data.get('event_image')):
+            _update_event_image(update_data.get('event_image'),event_id)
+        
+        update_event = Event.update_one(
+            {'event_id': event_id},
+            {"$set": updated_event}
+        )
+        if update_event.matched_count > 0:
+            msg = {"message":"event updated_succesfully"}
+            return make_response(jsonify(msg),200)
+        else:
+            return make_response(jsonify(event_id = event_id,updated_event=updated_event))
+    else:
+        msg = {"message":"event doesn't exist"}
+        return make_response(jsonify(msg),400)

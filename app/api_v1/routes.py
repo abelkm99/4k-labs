@@ -499,15 +499,13 @@ def addTask():
     return db_operations._addTask(req)
 
 @api_v1.route('/api_v1/task/assign_member', methods = ['PUT'])
-@role_required([roleMap.get('team_leader')])
+@role_required([v for k,v in roleMap.items()])
 def assign_member():
     req = request.get_json()
-    #  if it is none
-   
     if not req:
         msg = {"message":"invalid input"}
         return jsonify(msg),400
-    
+
     if  req.get('task_code',None) == None or req.get('members',None)==None:
         msg = {"message":"all input are required"}
         return jsonify(msg),400
@@ -600,5 +598,27 @@ def get_event_image(image):
 @role_required([roleMap.get('admin')])
 def delete_event(event_id):
     return db_operations._delete_event(event_id)
+
+@api_v1.route('/api_v1/get_event_gallery/<event_gallery_id>')
+def get_event_gallery_images(event_gallery_id):
+    events_path = current_app.config['EVENTS']
+
+    path = os.path.join(os.getcwd(),events_path,event_gallery_id)
+
+    if os.path.exists(path):
+        return send_file(path, mimetype='image/jpg')
+    return jsonify({'message':"file doesn't exist"}),404
+
+
+@api_v1.route('/api_v1/update_event/<event_id>',methods=['POST'])
+# @role_required([roleMap.get('admin')])
+def update_event(event_id):
+    req = request.get_json(force=True)
+    subset = ['event_title','event_image','event_start','event_end','event_description','new_galley_images','tobe_deleted_images']
+    update_data = {}
+    for key,value in req.items():
+        if key in subset and len(value):
+            update_data[key] = value
+    return db_operations._update_event(event_id,update_data)
 
 

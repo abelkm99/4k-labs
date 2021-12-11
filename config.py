@@ -6,8 +6,8 @@ class Config:
     CORS_HEADERS = ['Content-Type','Authorization']
     MAX_CONTENT_LENGTH = 30 * 1024 * 1024
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'anything but string'
-    MONOGO_URI = 'mongodb://localhost:27017/4kdevelopment'
-    # MONOGO_URI = "mongodb+srv://abel:test@cluster0.nhd1d.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+    # MONOGO_URI = 'mongodb://localhost:27017/4kdevelopment'
+    MONOGO_URI = "mongodb+srv://abel:test@cluster0.nhd1d.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
     CV_PATH = './cv'
     PROFILE_PICTURES = './profile'
     THUMBNAILS = './thumbnails'

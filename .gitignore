@@ -3,6 +3,6 @@
 events
 profile
 thumbnails
-
+firebase.json
 **/templates
 **/static
